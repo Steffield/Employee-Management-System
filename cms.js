@@ -141,8 +141,6 @@ var connection = mysql.createConnection({
 		});
 	}
 
-
-
 	function viewDepartments() {
 		// var query = "SELECT department.id 'Dep. ID', department.name 'Department',employee.first_name 'First Name', employee.last_name 'Last Name' FROM employee LEFT JOIN role on employee.role_id = role.id LEFT JOIN department on department.id = role.department_id";
 		var query = "SELECT department.id 'Dep. ID', department.name 'Department' FROM department";
@@ -333,12 +331,7 @@ var connection = mysql.createConnection({
         message: "What employee what you like to remove?"
       })
       .then(function(answer) {
-				// let chosenEmployee;
-				// for (let j=0; j<results.length; j++){
-				// 	if (results[j].id === answer.employee){
-				// 		chosenEmployee =results[j];
-				// 	}
-				// }
+			
 				var query = "DELETE FROM employee WHERE ?";
 				
 				connection.query(query, [{ last_name : answer.employee}], (err, res) =>{
