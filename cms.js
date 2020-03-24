@@ -33,7 +33,8 @@ var connection = mysql.createConnection({
 					// "--------------",
 					"Remove Employee, Department or Role",
 					// "--------------",
-					"View Total Utilized Budget of a Department"
+					"View Total Utilized Budget of Departments",
+					"Exit"
         ]
       })
       .then(function(answer) {
@@ -73,13 +74,13 @@ var connection = mysql.createConnection({
 
 		// total salary in department
 				
-					case "View Total Utilized Budget of a Department":
-						departmentBudget();
-						break
+				case "View Total Utilized Budget of Departments":
+					departmentBudget();
+					break;
 
-					case "Exit":
-						connection.end();
-						break;
+				case "Exit":
+					connection.end();
+					break;
 				}
 	
       });
@@ -265,7 +266,7 @@ var connection = mysql.createConnection({
           name: "salary",
           type: "input",
 					message: "What salary is this role receiving?",
-					validate: response =>response.match(/^[A-Za-z ]+$/)? true: "enter a valid name"
+					validate: response => response.match(/^[0-9]+$/) ? true: "enter a valid $ amount",
 				},
 				{
           name: "department_id",
@@ -278,10 +279,10 @@ var connection = mysql.createConnection({
 					connection.query(query, [answer.role, answer.salary, answer.department_id], function(err, res) {
 						if (err) throw err;
 						console.table(res);
-						
+						viewRoles();
+						runSearch();
 					});
-				viewRoles();
-				runSearch();
+			
 				});
 	};
 
@@ -312,8 +313,8 @@ var connection = mysql.createConnection({
 		//query database for all employees
 		// connection.query("Select id, CONCAT (first_name, ' ' ,last_name) AS Name FROM employee", (err, results)=>{
 		connection.query("Select * FROM employee", (err, results)=>{
-	
 			if(err) throw err;
+			console.table(results);
 			//prompt user which one to remove
 		inquirer
       .prompt({
@@ -470,7 +471,7 @@ function removeDepartment(){
 				{
 					name:"updateWhat",
 					type: "list",
-					message: "What about the role would you like to update?",
+					message: "What about the employee would you like to update?",
 					choices: ["Update Name", "Update Role ID", "Update Department ID"]
 				}
 			])
@@ -490,7 +491,7 @@ function removeDepartment(){
 						])
 						.then((answer)=>{
 							var query = "UPDATE employee SET ?, ? WHERE ?";
-						connection.query(query, [{first_name: answer.newFirst}, {last_name: answer.newLast}, {id: answer. employeeID}], (err, res)=>{
+						connection.query(query, [{first_name: answer.newFirst}, {last_name: answer.newLast}, {id: answer.employeeID}], (err, res)=>{
 						if (err) throw (err);
 						console.log(`${res.affectedRows} Name updated!\n`);
 						console.table(res);
@@ -506,7 +507,7 @@ function removeDepartment(){
 					})
 					.then((answer)=>{
 						var query = "UPDATE employee SET ? WHERE ?";
-					connection.query(query, [{role_id: answer.roleID}, {id: answer. employeeID}], (err, res)=>{
+					connection.query(query, [{role_id: answer.roleID}, {id: answer.employeeID}], (err, res)=>{
 					if (err) throw (err);
 					console.log(`${res.affectedRows} Role ID updated!\n`);
 					console.table(res);
@@ -522,7 +523,7 @@ function removeDepartment(){
 					})
 					.then((answer)=>{
 						var query = "UPDATE employee SET ? WHERE ?";
-					connection.query(query, [{department_id: answer.departmentID}, {id: answer. employeeID}], (err, res)=>{
+					connection.query(query, [{department_id: answer.departmentID}, {id: answer.employeeID}], (err, res)=>{
 					if (err) throw (err);
 					console.log(`${res.affectedRows} Dep ID updated!\n`);
 					console.table(res);
@@ -579,8 +580,10 @@ function removeDepartment(){
 
 	function updateRole() {
 		// query the database for all roles 
-		connection.query("SELECT * FROM role", (err, results) => {
+		// var query = "SELECT role.id 'Role ID', role.title 'Title',  employee.id 'Emp. ID', employee.first_name 'First Name', employee.last_name 'Last Name', role.salary 'Salary', department.name 'Department', employee.manager_id 'Manager ID' from ((role INNER JOIN employee ON role.id=employee.role_id) INNER JOIN department ON department.id = role.department_id)";
+		connection.query("SELECT * from role;", (err, results) => {
 			if (err) throw err;
+			console.table(results);
 			// once you have the roles, prompt the user which one they want to change
 			inquirer
 				.prompt([
@@ -590,11 +593,11 @@ function removeDepartment(){
 						choices: () => {
 							const roleArray = [];
 							for (let i = 0; i < results.length; i++) {
-								roleArray.push(results[i].title);
+								roleArray.push(results[i].id);
 							}
 							return roleArray;
 						},
-						message: "What role would you like to update?"
+						message: "What role ID would you like to update?"
 					},
 					{
 						name: "whatColumn",
@@ -607,7 +610,7 @@ function removeDepartment(){
 					// get the information of the chosen role
 					let chosenRole;
 					for (let i = 0; i < results.length; i++) {
-						if (results[i].title === answer.role) {
+						if (results[i].id === answer.id) {
 							chosenRole = results[i];
 						}
 					}	
@@ -619,10 +622,10 @@ function removeDepartment(){
 								type: "input",
 								message: "Enter the new title:"
 							}).then(res =>{
-								connection.query("UPDATE role SET title ? WHERE title ?", [{ title: res.newTitle}, {title: chosenRole}], function(err, res){
+								connection.query("UPDATE role SET ? WHERE ?", [{ title: res.newTitle}, {id: chosenRole}], function(err, res){
 									if (err) throw err;
 									console.table(res);
-
+									viewRoles();
 								})
 							})
 					} else
@@ -634,9 +637,10 @@ function removeDepartment(){
 							type: "input",
 							message: "Enter the new salary amount:"
 						}).then(res =>{
-							connection.query("UPDATE role SET salary ? WHERE id ?", [{salary: res.newSalary}, { title : answer.chosenRole}], function(err, res){
+							connection.query("UPDATE role SET ? WHERE ?", [{salary: res.newSalary}, { id : answer.chosenRole}], function(err, res){
 								if (err) throw err;
 								console.table(res);
+								viewRoles();
 							})
 						});
 			///update dep id
@@ -648,11 +652,11 @@ function removeDepartment(){
 							message: "Enter the new department ID:",
 							validate: response => response.match(/^[0-9]+$/) ? true: "enter a valid ID"
 						}).then(res =>{
-							connection.query("UPDATE role SET department_id ? WHERE id ?", [{department_id : res.newDepID}, {title : answer.chosenRole}], function(err, res){
+							connection.query("UPDATE role SET ? WHERE ?", [{department_id : res.newDepID}, {id : answer.chosenRole}], function(err, res){
 								if (err) throw err;
 								console.table(res);
 								viewRoles();
-
+								
 							})
 						})
 					}
@@ -663,38 +667,13 @@ function removeDepartment(){
 //=======view total utilized budget of department===
 
 	function departmentBudget(){
-		var query = "SELECT * from department";
-		connection.query(query, function(err, res) {
-		if (err) throw err;
-		console.table(res);
-
-		inquirer
-			.prompt(
-				{
-					name:"depName",
-					type: "list",
-					choices: () =>{
-						const depArray=[];
-						for (let i=0; i< res.length; i++){
-							depArray.push(res[i].name);
-						}
-						return depArray;
-		
-					},
-					message: "Select which department's total budget you would like to see:"
-				}
-			)
-				.then((answer)=>{
-					var query = "SELECT role.department_id 'Dep ID', department.name 'Department', SUM(role.salary) 'Total Budget' FROM role INNER JOIN department ON role.department_id = department.id GROUP BY role.department_id WHERE ?";
-				connection.query(query, [{name : answer.depName}], (err, res)=>{ //won't let me do department.name
+					var query = "SELECT role.department_id 'Dep ID', department.name 'Department', SUM(role.salary) 'Total Budget' FROM role INNER JOIN department ON role.department_id = department.id GROUP BY role.department_id";
+				connection.query(query, (err, res)=>{ 
 				if (err) throw (err);
 				console.log(`${res.affectedRows} Total Budget for Department!\n`);
 				console.table(res);
-				// viewDepartments();
+				runSearch();
 				});
-			});
-				
-			
-		});
+
 	}
 	
