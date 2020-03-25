@@ -16,7 +16,7 @@ create table department (
 
 -- role
 create table role (
-	id int not null,
+	id int not null auto_increment,
     title varchar(30),
     salary decimal,
     department_id INT,
